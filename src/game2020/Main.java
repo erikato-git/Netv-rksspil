@@ -167,7 +167,7 @@ public class Main extends Application {
               //TODO outputStream("av")
 			} else {
 				me.addPoints(1);
-				//TODO outputStream("point")
+				//TODO outputStream("plus")
 			
 				fields[x][y].setGraphic(new ImageView(image_floor));
 				x+=delta_x;
@@ -188,11 +188,7 @@ public class Main extends Application {
 
 				me.setXpos(x);
 				me.setYpos(y);
-				
-				//TODO outputStream("move") 
-//				System.out.println("x: " + me.getXpos() + ", y: " + me.getYpos() + ", dir: " + me.getDirection());
-				
-				
+			
 				try {
 					outToServer.writeBytes("move" + '\n');
 				} catch (IOException e) {
