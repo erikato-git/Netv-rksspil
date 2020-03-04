@@ -7,17 +7,19 @@ import game2020.socket.*;
 
 public class Server extends Thread {
 
+
 	public static void main(String[] args) throws IOException {
 
 		ServerSocket welcomSocket = new ServerSocket(9002);
 		Socket connectionSocket = welcomSocket.accept(); // <- accept = 3-way handshake
 
-		ServerThread threadWriteServer = new ServerThread(connectionSocket);	//Eventhandleren!!!
+		ServerThread serverThread = new ServerThread(connectionSocket);	//Eventhandleren!!!
 		ThreadTCPWriteServer threadReadServer = new ThreadTCPWriteServer(connectionSocket);
 
-		threadWriteServer.start();
+		serverThread.start();
 		threadReadServer.start();
 
 	}
+	
 
 }

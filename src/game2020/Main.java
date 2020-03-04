@@ -1,8 +1,11 @@
 package game2020;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +45,9 @@ public class Main extends Application {
 	private static Server eventhandler;
 	private static Socket clientSocket;
 	private static DataOutputStream outToServer; 
-
+	private static GridPane boardGrid;
 		
-	private static  String[] board = {    // 20x20
+	private static String[] board = {    // 20x20
 			"wwwwwwwwwwwwwwwwwwww",
 			"w        ww        w",
 			"w w  w  www w  w  ww",
@@ -91,7 +94,7 @@ public class Main extends Application {
 
 			scoreList = new TextArea();
 			
-			GridPane boardGrid = new GridPane();
+			boardGrid = new GridPane();
 
 			image_wall  = new Image(getClass().getResourceAsStream("Image/wall4.png"),size,size,false,false);
 			image_floor = new Image(getClass().getResourceAsStream("Image/floor1.png"),size,size,false,false);
@@ -116,8 +119,8 @@ public class Main extends Application {
 					boardGrid.add(fields[i][j], i, j);
 				}
 			}
-			scoreList.setEditable(false);
 			
+			scoreList.setEditable(false);
 			
 			grid.add(mazeLabel,  0, 0); 
 			grid.add(scoreLabel, 1, 0); 
@@ -149,7 +152,25 @@ public class Main extends Application {
 			players.add(harry);
 			fields[14][15].setGraphic(new ImageView(hero_up));
 			*/
+			
+			
+			
+			localIp = InetAddress.getLocalHost().getHostAddress();	//identification when sending message to ServerThread
+			
+			outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			
+			localIp = InetAddress.getLocalHost().getHostAddress();	//identification when sending message to ServerThread
 
+
+			
+			try {
+				outToServer.writeBytes("nySpiller" + " " + localIp + " " + name + '\n');
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			
+			
 			scoreList.setText(getScoreList());
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -240,35 +261,59 @@ public class Main extends Application {
 	}
 
 
-
-
 	public static void main(String[] args) throws Exception, IOException {
 		
 //		hostIp = JOptionPane.showInputDialog("Insert ip you want to connect");
 		hostIp = "192.168.1.11";		//kun til at teste med
-		name = JOptionPane.showInputDialog("Indsæt navn: ");
+//		name = JOptionPane.showInputDialog("Indsæt navn: ");
+		name = "Bo";
+	
 
-		clientSocket = new Socket(hostIp, 9002);
+		clientSocket = new Socket(hostIp,9002);
 		
-		ThreadTCPReadClient threadRclient = new ThreadTCPReadClient(clientSocket);
-		ThreadTCPWriteClient threadTclient = new ThreadTCPWriteClient(clientSocket);
-
-		outToServer = new DataOutputStream(clientSocket.getOutputStream());
-
+		ThreadTCPWriteClient threadRclient = new ThreadTCPWriteClient(clientSocket);
+		ClientThread clientThread = (new Main()).new ClientThread(clientSocket);
+		
 		localIp = InetAddress.getLocalHost().getHostAddress();	//identification when sending message to ServerThread
 		
-		try {
-			outToServer.writeBytes("nySpiller" + " " + localIp + " " + name + '\n');
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		outToServer = new DataOutputStream(clientSocket.getOutputStream());
+		
+		localIp = InetAddress.getLocalHost().getHostAddress();	//identification when sending message to ServerThread
 		
 		threadRclient.start();
-		threadTclient.start();
+		clientThread.start();
 		
 		launch();
 		
 	}
+	
+	
+	
+	public class ClientThread extends Thread {
+		Socket clientSocket;
+
+		public ClientThread(Socket clientSocket) {
+			this.clientSocket = clientSocket;
+		}
+
+		@Override
+		public void run() {
+			String modifiedSentence;
+
+			while (true) {
+				try {
+					BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+					modifiedSentence = inFromServer.readLine();
+					System.out.println("FROM SERVER in CLIENTTHREAD: " + modifiedSentence);
+					System.out.println("FROM CLIENTTHREAD"+Main.fields);
+				} catch (IOException e) {
+					e.getStackTrace();
+				}
+			}
+		}
+	}
+
+	
 
 
 	public static String[] getBoard() {
@@ -285,7 +330,6 @@ public class Main extends Application {
 		Image[] herodirections = {hero_right,hero_left,hero_up,hero_down};
 		return herodirections;
 	}
-	
 	
 	
 }
