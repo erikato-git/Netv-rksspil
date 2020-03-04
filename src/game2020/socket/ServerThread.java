@@ -10,15 +10,17 @@ import java.util.Map;
 
 import game2020.Player;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import game2020.Main;
 
 public class ServerThread extends Thread {
-	Socket welcomSocket;
-	Map<String, Player> players;			//TODO Overvej evt. en anden collection-framework, evt. HashMap med IP-adresser som key og player som value
-	Main main;
-	int randomX;
-	int randomY;
-	String randomDirection;
+	private Socket welcomSocket;
+	private Map<String, Player> players;			//TODO Overvej evt. en anden collection-framework, evt. HashMap med IP-adresser som key og player som value
+	private int randomX;
+	private int randomY;
+	private String randomDirection;
+	private int randomDirectionNumber;
 	
 	public ServerThread(Socket welcomSocket) {
 		this.welcomSocket = welcomSocket;
@@ -35,16 +37,24 @@ public class ServerThread extends Thread {
 				clientSentence = inFromClient.readLine();
 				System.out.println("FROM EVENTHANDLEREN: " + clientSentence);
 
-				//TODO "nySpiller": ny forbindelse til socket. Oprette ny spiller på gui'en, randomgenerer position og retning, broadcaster til socket
+				//TODO "nySpiller": ny forbindelse til socket. Oprette ny spiller på gui'en, randomgenerer position og retning
 				if(clientSentence.startsWith("nySpiller")) {
 					String[] splitted = clientSentence.split(" ");
 					//random generate
-					randomgeneratePosition();
-					System.out.println(splitted[1]);
-					//opret spiller med random-genereret position
-//					players.put(splitted[1], p);
+					randomgeneratePositionAndDirection();
+					String navn = splitted[2];
+					Player p = new Player(navn, randomX, randomY, randomDirection);
+
+					//TODO Man kan diskutere om gui-manipulationen skal foregå her eller sende kald til Main-klassen 
+					Main.addPlayers(p);
+					Label[][] fields = Main.fields;
+					Image[] heroDirections = Main.get_Herodirections();
+					System.out.println("fields: " + fields + ", herodirections: " + heroDirections);
+					fields[randomX][randomY].setGraphic(new ImageView(heroDirections[randomDirectionNumber]));
 					
-				//TODO "move": up, ned, venstre, højre. Opdaterer den pågældene spillers position, opdaterer point, broadcaster til socket
+
+					players.put(splitted[1], p);
+				//TODO "move": up, ned, venstre, højre. Opdaterer den pågældene spillers position, opdaterer point
 				}else if(clientSentence.startsWith("move")){
 
 					
@@ -56,7 +66,7 @@ public class ServerThread extends Thread {
 				}else if(clientSentence.startsWith("av")){
 
 					
-				//TODO "plus" / "minus": Point for den pågældende spiller opdateres og broadcastes til socket
+				//TODO "plus" / "minus": Point for den pågældende spiller opdateres
 				}else if(clientSentence.startsWith("plus") || clientSentence.startsWith("plus")){
 					
 					
@@ -71,19 +81,19 @@ public class ServerThread extends Thread {
 		}
 	}
 
-	private void randomgeneratePosition() {
+	
+	private void randomgeneratePositionAndDirection() {
 		boolean foundPosition = false;
 		while(!foundPosition) {
 			randomX = (int) Math.floor(Math.random() * 20);
 			randomY = (int) Math.floor(Math.random() * 20);
-			String[] board = main.getBoard();
-			if(main.getPlayerAt(randomX, randomY) == null && board[randomY].charAt(randomX) != 'w') {
+			String[] board = Main.getBoard();
+			if(Main.getPlayerAt(randomX, randomY) == null && board[randomY].charAt(randomX) != 'w') {
 				foundPosition = true;
 			}
 		}
-		//direction
-		randomDirection = 
-		
-		
+		String directions[] = {"right","left","up","down"};
+		randomDirectionNumber = (int) Math.floor(Math.random() * 4);
+		randomDirection = directions[randomDirectionNumber];
 	}
 }

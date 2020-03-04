@@ -33,8 +33,8 @@ public class Main extends Application {
 	public static Player me;
 	public static List<Player> players = new ArrayList<Player>();
 
-	private Label[][] fields;
-	private TextArea scoreList;
+	public static Label[][] fields;
+	public static TextArea scoreList;
 	
 	public static String hostIp;
 	public static String localIp;
@@ -44,7 +44,7 @@ public class Main extends Application {
 	private static DataOutputStream outToServer; 
 
 		
-	private  String[] board = {    // 20x20
+	private static  String[] board = {    // 20x20
 			"wwwwwwwwwwwwwwwwwwww",
 			"w        ww        w",
 			"w w  w  www w  w  ww",
@@ -156,6 +156,7 @@ public class Main extends Application {
 		}
 	}
 
+
 	public void playerMoved(int delta_x, int delta_y, String direction) {
 		me.direction = direction;
 		int x = me.getXpos(),y = me.getYpos();
@@ -229,7 +230,7 @@ public class Main extends Application {
 		return b.toString();
 	}
 
-	public Player getPlayerAt(int x, int y) {
+	public static Player getPlayerAt(int x, int y) {
 		for (Player p : players) {
 			if (p.getXpos()==x && p.getYpos()==y) {
 				return p;
@@ -245,6 +246,7 @@ public class Main extends Application {
 		
 //		hostIp = JOptionPane.showInputDialog("Insert ip you want to connect");
 		hostIp = "192.168.1.11";		//kun til at teste med
+		name = JOptionPane.showInputDialog("Indsæt navn: ");
 
 		clientSocket = new Socket(hostIp, 9002);
 		
@@ -256,11 +258,10 @@ public class Main extends Application {
 		localIp = InetAddress.getLocalHost().getHostAddress();	//identification when sending message to ServerThread
 		
 		try {
-			outToServer.writeBytes("nySpiller" + " " + localIp + '\n');
+			outToServer.writeBytes("nySpiller" + " " + localIp + " " + name + '\n');
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		
 		threadRclient.start();
 		threadTclient.start();
@@ -270,13 +271,22 @@ public class Main extends Application {
 	}
 
 
-	public String[] getBoard() {
+	public static String[] getBoard() {
 		return board;
 	}
 
-	public void setBoard(String[] board) {
-		this.board = board;
+	public static void addPlayers(Player p) {
+		if(!players.contains(p)) {
+			players.add(p);
+		}
 	}
+	
+	public static Image[] get_Herodirections() {
+		Image[] herodirections = {hero_right,hero_left,hero_up,hero_down};
+		return herodirections;
+	}
+	
+	
 	
 }
 
