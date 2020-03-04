@@ -1,12 +1,9 @@
 package game2020;
 
-import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.ServerSocket;
+import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +36,14 @@ public class Main extends Application {
 	private Label[][] fields;
 	private TextArea scoreList;
 	
+	public static String hostIp;
+	public static String localIp;
+	public static String name;
+	private static Server eventhandler;
+	private static Socket clientSocket;
+	private static DataOutputStream outToServer; 
+
+		
 	private  String[] board = {    // 20x20
 			"wwwwwwwwwwwwwwwwwwww",
 			"w        ww        w",
@@ -157,17 +162,34 @@ public class Main extends Application {
 
 		if (board[y+delta_y].charAt(x+delta_x)=='w') {
 			me.addPoints(-1);
-			//TODO outputStream("minus")
+			
+			try {												//TODO Overvej om det er nødvendigt at sende points over socket-forbindelsen
+				outToServer.writeBytes("minus" + '\n');
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		} 
+		
 		else {
 			Player p = getPlayerAt(x+delta_x,y+delta_y);
 			if (p!=null) {
               me.addPoints(10);
               p.addPoints(-10);
-              //TODO outputStream("av")
+              
+              try {
+				outToServer.writeBytes("av" + '\n');
+              } catch (IOException e) {
+				e.printStackTrace();
+              }
+              
 			} else {
 				me.addPoints(1);
-				//TODO outputStream("plus")
+				
+				try {												//TODO Overvej om det er nødvendigt at sende points over socket-forbindelsen
+					outToServer.writeBytes("plus" + '\n');
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			
 				fields[x][y].setGraphic(new ImageView(image_floor));
 				x+=delta_x;
@@ -192,7 +214,6 @@ public class Main extends Application {
 				try {
 					outToServer.writeBytes("move" + '\n');
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -218,23 +239,28 @@ public class Main extends Application {
 	}
 
 
-	public static String ip;
-	public static String name;
-	private static Server eventhandler;
-//	private static DataOutputStream outToServer;
-	private static Socket clientSocket;
-	private static DataOutputStream outToServer; 
 
 
-	
 	public static void main(String[] args) throws Exception, IOException {
 		
-		clientSocket = new Socket("192.168.1.11", 9002);
+//		hostIp = JOptionPane.showInputDialog("Insert ip you want to connect");
+		hostIp = "192.168.1.11";		//kun til at teste med
+
+		clientSocket = new Socket(hostIp, 9002);
 		
 		ThreadTCPReadClient threadRclient = new ThreadTCPReadClient(clientSocket);
 		ThreadTCPWriteClient threadTclient = new ThreadTCPWriteClient(clientSocket);
 
 		outToServer = new DataOutputStream(clientSocket.getOutputStream());
+
+		localIp = InetAddress.getLocalHost().getHostAddress();	//identification when sending message to ServerThread
+		
+		try {
+			outToServer.writeBytes("nySpiller" + " " + localIp + '\n');
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		
 		threadRclient.start();
 		threadTclient.start();
@@ -242,5 +268,15 @@ public class Main extends Application {
 		launch();
 		
 	}
+
+
+	public String[] getBoard() {
+		return board;
+	}
+
+	public void setBoard(String[] board) {
+		this.board = board;
+	}
+	
 }
 
